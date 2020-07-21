@@ -55,7 +55,7 @@ def header(gruta, nav_headers="", title="", onload="", image=""):
     header, state, context = gruta.html_cache.get("h-header")
 
     if not header:
-        header = "<body onLoad=\"{onload}\">\n"
+        header = "<body onLoad=\"$onload$\">\n"
         header += "<header>\n"
         header += "<h1 id=\"title\"><a href=\"%s\">%s</a></h1>\n" % (
             gruta.url(), gruta.template("cfg_site_name"))
@@ -63,22 +63,10 @@ def header(gruta, nav_headers="", title="", onload="", image=""):
         header += "<h2 id=\"subtitle\">%s</h2>\n" % gruta.template("cfg_slogan")
 
         # navigation menu
-        nav = ""
+        t = gruta.template("nav_menu")
 
-        for t in gruta.template("cfg_main_menu_topics").split(":"):
-            topic = gruta.topic(t)
-
-            if topic:
-                nav += "<li><a href=\"%s\">%s</a></li>\n" % (
-                    gruta.url(topic), topic.get("name"))
-
-        # only generate a Tags link if there are any
-        if len(gruta.tags(test=True)) > 0:
-            nav += "<li><a href=\"%s\">Tags</a></li>\n" % gruta.url("tag/")
-
-        # don't generate an empty nav
-        if nav != "":
-            header += "<nav id=\"menu\">\n<ul>\n" + nav + "</ul>\n</nav>\n"
+        if t != "":
+            header += "<nav id=\"menu\">\n%s</nav>\n" % pygruta.special_uris(gruta, t)
 
         header += "</header>\n"
 
@@ -105,7 +93,7 @@ def header(gruta, nav_headers="", title="", onload="", image=""):
     if image != "":
         s += "<meta property=\"og:image\" content=\"%s\"/>\n" % gruta.aurl(image)
 
-    s += header.format(title=title, onload=onload)
+    s += header.replace("$onload$", onload)
 
     return s
 

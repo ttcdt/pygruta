@@ -1,11 +1,13 @@
-Gruta/pygruta
-=============
+pygruta
+=======
 
 ttcdt <dev@triptico.com>
 
-Gruta is a blogging tool and web content management system. This package is
-called pygruta and is a Python port/rework/reboot of the original Perl
-version [1].
+Gruta is a blogging tool with support for ActivityPub, Webmention, Tweeter, static
+generation and more.
+
+This package is called pygruta and is a Python port/rework/reboot of the original
+Perl version [1].
 
 Things that work by now:
 
@@ -17,11 +19,11 @@ Things that work by now:
    (from the command-line tool).
  * Webmention support: reception of mentions (from the server) and
    propagation of mentions in Gruta stories (from the command-line tool).
- * Twitter searches (from the command-line tool) and feed-posting.
+ * Twitter feed-posting and searches (from the command-line tool).
  * Notifications via Telegram.
  * Online maintenance works for stories and topics.
 
-Things that do not:
+Things that do not work:
 
  * The SQL storage of the Gruta database (it won't probably be ported).
  * Comments to stories (probably will never be ported).
