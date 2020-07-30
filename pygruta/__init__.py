@@ -7,7 +7,7 @@
 
 import time, re
 
-__version__ = "1.41"
+__version__ = "1.42"
 
 def log_str(category, string):
     return "%-5s: %s %s" % (category, time.strftime("%Y-%m-%d %H:%M:%S"), string)

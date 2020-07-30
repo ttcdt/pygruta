@@ -33,8 +33,8 @@ def usage():
     print("snapshot {src} {out folder} [url_prefix]   Snapshots a Gruta site")
     print("httpd {src} [port]                         Runs the httpd")
     print("webmention-feed {src}                      Sends Webmentions to links in the feed")
-    print("twitter-feed {src}                         Send the feed to Twitter")
-    print("twitter-import {src} -q {query} \\          Imports tweets from query(es),")
+    print("twitter-feed {src}                         Sends the feed to Twitter")
+    print("twitter-import {src} -q {query} \\          Imports tweets from query(s),")
     print("    [-i {ignore}] [-q {q} -i {i}...]       optionally ignoring tweeter(s)")
     print("activitypub-feed {src}                     Sends the feed to ActivityPub followers")
     print("activitypub-send-note {src} {uid} \\        Sends an ActivityPub note")
@@ -45,6 +45,7 @@ def usage():
     print("icalendar-export {src}                     Exports the 'events' topic as an iCalendar")
     print("copy {src} {dest}                          Copies the 'src' db into 'dest'")
     print("atom {src}                                 Prints an ATOM feed to STDOUT")
+    print("feeds {src}                                Sends all feeds")
 
     return 1
 
@@ -79,12 +80,12 @@ def lines_to_story(story, lines):
                 in_header = False
             else:
                 try:
-                    key, value = l.split(": ")
+                    key, value = l.split(": ", 1)
 
                     data[key] = value
 
                 except:
-                    pygruta.log("ERROR", "Invalid line " + l)
+                    pygruta.log("ERROR", "Invalid line '%s'" % l)
         else:
             content.append(l)
 
@@ -179,6 +180,16 @@ else:
     elif cmd == "twitter-feed":
         import pygruta.twitter
 
+        pygruta.twitter.send_feed(gruta)
+
+    elif cmd == "feeds":
+        import pygruta.activitypub
+        pygruta.activitypub.send_feed(gruta)
+
+        import pygruta.webmention
+        pygruta.webmention.send_feed(gruta)
+
+        import pygruta.twitter
         pygruta.twitter.send_feed(gruta)
 
     elif cmd == "activitypub-send-note":

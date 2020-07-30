@@ -23,7 +23,7 @@ def twitter_api(gruta):
         twitter = Twython(c_key, c_secret, a_token_key, a_token_secret)
     else:
         twitter = None
-        gruta.log("ERROR", "Twitter: not configured")
+        gruta.log("INFO", "Twitter: not configured -- cannot continue")
 
     return twitter
 

@@ -442,6 +442,48 @@ class Gruta:
         return mt
 
 
+    # SHORTENED URLS
+
+    def shorten_url(self, l_url):
+
+        i = 1
+        f = False
+        s = None
+
+        t = self.topic("s")
+
+        if t is None:
+            # topic doesn't exist? create it and start from 1
+            t = self.new_topic({"id": "s", "name": "Shortened URLs"})
+            self.save_topic(t)
+
+        else:
+            # find a story that redirs to l_url
+            for id in self.stories("s"):
+                s = self.story("s", id)
+
+                if s.get("redir") == l_url:
+                    f = True
+                    break
+
+                i += 1
+
+        if not f:
+            # not found: create new story
+            s = self.new_story({
+                "topic_id": "s",
+                "id":       "%x" % i,
+                "content":  "&nbsp;",
+                "redir":    l_url,
+                "title":    l_url
+                }
+            )
+
+            self.save_story(s)
+
+        return self.aurl(s)
+
+
     # others
 
     def url(self, object=None, prefix=None, absolute=False):
@@ -508,11 +550,10 @@ class Gruta:
             content = re.sub("<", "&lt;", content)
             content = re.sub(">", "&gt;", content)
 
-            # abstract is just the title
-            abstract = "<h2>" + title + "</h2>\n"
-
             # wrap body as preformatted
             body = "<pre>\n" + content + "</pre>\n"
+            abstract = body
+
         else:
             # grutatxt, html and raw_html are similar
 
@@ -564,9 +605,9 @@ class Gruta:
             # is there a spaceship in the content?
             if "<->" in content:
                 abstract = content.split("<->")[0]
-                content = content.replace("<->", "")
+                content  = content.replace("<->", "")
 
-            if not abstract or story.get("full_story"):
+            if abstract == "" or story.get("full_story") == "1":
                 abstract = content
 
             body = content
@@ -750,12 +791,6 @@ class Gruta:
 
             org.log("DEBUG", "Create: template '%s'" % id)
             self.save_template(id, content)
-
-        for u in org.urls():
-            l_url = org.unshorten_url(u)
-
-            org.log("DEBUG", "Create: shortened url '%s'" % u)
-            self.save_url(u, l_url)
 
         for id in org.images():
             content = org.image(id)

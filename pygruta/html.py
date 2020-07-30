@@ -658,12 +658,14 @@ def edit_story(gruta, story, q_vars):
 
     format = story.get("format") or gruta.template("cfg_default_format")
     page += "<p>Format:<br/>\n"
-    if format == "grutatxt":
-        page += "<input type=\"radio\" name=\"format\" value=\"grutatxt\" checked> grutatxt"
-        page += "<input type=\"radio\" name=\"format\" value=\"raw_html\"> raw_html"
-    else:
-        page += "<input type=\"radio\" name=\"format\" value=\"grutatxt\"> grutatxt"
-        page += "<input type=\"radio\" name=\"format\" value=\"raw_html\" checked> raw_html"
+
+    for f in ("raw_html", "grutatxt", "text"):
+        page += "<input type=\"radio\" name=\"format\" value=\"%s\"" % f
+
+        if f == format:
+            page += " checked"
+
+        page += "> %s" % f
 
     page += "</p>\n"
 
@@ -1003,17 +1005,6 @@ def get_handler(gruta, q_path, q_vars):
             s_set    = list(gruta.story_set(topics=i_topics, offset=offset, num=num + 1))
 
             status, body = 200, paged_index(gruta, s_set, offset, num, title)
-
-
-    elif re.search("^/s/[0-9a-f]+", q_path):
-        # SHORT URL
-
-        body = gruta.unshorten_url(q_path)
-
-        if body != "":
-            status = 303 # redirect to body
-        else:
-            status = 404
 
 
     elif re.search("^/~\d+\.html$", q_path):

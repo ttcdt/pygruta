@@ -165,7 +165,7 @@ def send_feed(gruta):
         dt = time.time() - int(gruta.date_format(story.get("mtime"), "%s"))
 
         if dt > 7 * 24 * 60 * 60:
-            gruta.log("INFO", "Webmention-feed: skipping untouched story '%s' (%ds)" % (
+            gruta.log("DEBUG", "Webmention-feed: skipping untouched story '%s' (%ds)" % (
                 source, dt))
 
             continue

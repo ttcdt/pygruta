@@ -22,7 +22,7 @@ class MEM(Gruta):
 
         # ensure all keys exist
         for k in ("topics", "stories", "users", "followers",
-                  "templates", "urls", "images", "comments"):
+                  "templates", "images", "comments"):
             if self.db.get(k) is None:
                 self.db[k] = {}
 
@@ -275,44 +275,6 @@ class MEM(Gruta):
     def images(self):
         for id in self.db["images"]:
             yield id
-
-
-    # SHORT URLS
-
-    def unshorten_url(self, s_url):
-        try:
-            l_url = self.db["urls"][s_url]
-        except:
-            l_url = ""
-
-        return l_url
-
-    def save_url(self, s_url, l_url):
-        self.db["urls"][s_url] = l_url
-
-    def shorten_url(self, l_url):
-        su, i = "", 1
-
-        for u in self.db["urls"]:
-            if self.db["urls"][u] == l_url:
-                su = u
-                break
-            else:
-                i += 1
-
-        # not found? create new
-        if su == "":
-            su = "%x" % i
-
-        s_url = self.aurl("/s/%s" % su)
-
-        self.save_url(s_url, l_url)
-
-        return s_url
-
-    def urls(self):
-        for u in self.db["urls"]:
-            yield u
 
 
     # STORY SETS

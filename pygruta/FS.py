@@ -111,7 +111,7 @@ class FS(Gruta):
 
         # create subfolders
         for f in ("comments", "sids", "templates", "topics", "users",
-                    "followers", "urls", "images"):
+                    "followers", "images"):
             try:
                 os.mkdir(self.path + "/" + f)
             except:
@@ -425,59 +425,6 @@ class FS(Gruta):
             id = os.path.basename(id)
 
             yield id
-
-
-    # SHORT URLS
-
-    def unshorten_url(self, s_url):
-        # get the last part
-        if "/" in s_url:
-            s_url = s_url.split("/")[-1]
-
-        try:
-            l_url = self._file_to_string("%s/urls/%s" % (self.path, s_url)).rstrip()
-        except:
-            l_url = ""
-
-        return l_url
-
-    def save_url(self, s_url, l_url):
-        # create directory if needed
-        try:
-            os.mkdir("%s/urls" % self.path)
-        except:
-            pass
-
-        # get the last part
-        if "/" in s_url:
-            s_url = s_url.split("/")[-1]
-
-        self._string_to_file(l_url, "%s/urls/%s" % (self.path, s_url))
-
-    def shorten_url(self, l_url):
-        s_url, i = "", 1
-
-        # iterate all directory
-        for f in glob.glob("%s/urls/*" % (self.path)):
-            s = self._file_to_string(f).rstrip()
-
-            if s == l_url:
-                # found!
-                s_url = os.path.basename(f)
-                break
-            else:
-                i += 1
-
-        # not found? create new
-        if s_url == "":
-            s_url = "%x" % i
-            self.save_url(s_url, l_url)
-
-        return self.aurl("/s/%s" % s_url)
-
-    def urls(self):
-        for u in glob.glob("%s/urls/*" % self.path):
-            yield self.aurl("/s/%s" % os.path.basename(u))
 
 
     # STORY SETS
