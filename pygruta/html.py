@@ -36,7 +36,11 @@ def header(gruta, nav_headers="", title="", onload="", image="", desc=""):
         head += "<style type=\"text/css\">%s</style>\n" % gruta.template("css_compact")
         head += "<link rel=\"alternate\" type=\"application/atom+xml\" title=\"ATOM\" href=\"%s\" />\n" % gruta.url("atom.xml")
         head += "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"RSS\" href=\"%s\" />\n" % gruta.url("rss.xml")
-        head += "<link rel=\"shortcut icon\" href=\"%s\"/>\n" % gruta.template("cfg_favicon_url")
+
+        favicon = gruta.template("cfg_favicon_url")
+
+        if favicon != "":
+            head += "<link rel=\"shortcut icon\" href=\"%s\"/>\n" % favicon
 
         wm_hook = gruta.template("cfg_webmention_hook")
 
