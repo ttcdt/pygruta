@@ -457,6 +457,19 @@ class Gruta:
             t = self.new_topic({"id": "s", "name": "Shortened URLs"})
             self.save_topic(t)
 
+            # create an index story that is itself a redirect to index
+            s = self.new_story({
+                "topic_id": "s",
+                "id":       "index",
+                "content":  "&nbsp;",
+                "redir":    self.aurl(),
+                "title":    self.aurl(),
+                "date":     "19000101000000"
+                }
+            )
+
+            self.save_story(s)
+
         else:
             # find a story that redirs to l_url
             for id in self.stories("s"):

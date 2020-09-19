@@ -158,8 +158,11 @@ def send_feed(gruta):
 
             # build the tweet
 
+            # story title
+            tweet = pygruta.boldify(story.get("title")) + "\n\n"
+
             # story body
-            tweet = pygruta.special_uris(gruta, story.get("body"))
+            tweet += pygruta.special_uris(gruta, story.get("body"))
 
             # replace paragraph separators
             tweet = tweet.replace("</p><p>", "\n")
@@ -176,8 +179,8 @@ def send_feed(gruta):
             tweet = gruta.shorten_url(gruta.aurl(story)) + "\n\n" + tweet
 
             # truncate
-            if len(tweet) > 256:
-                tweet = tweet[0:255] + "\u2026"
+            if len(tweet) > 240:
+                tweet = tweet[0:239] + "\u2026"
 
             # does the story have an image?
             media_id = None
@@ -210,21 +213,33 @@ def send_feed(gruta):
                 else:
                     gruta.log("ERROR", "Twitter-feed: BAD image '%s'" % img)
 
-            try:
-                # tweet!
-                if media_id is not None:
-                    twitter.update_status(status=tweet, media_ids=[media_id])
-                else:
-                    twitter.update_status(status=tweet)
+            # some retries shortening the tweet
+            r = 10
+            while r > 0:
+                try:
+                    # tweet!
+                    if media_id is not None:
+                        twitter.update_status(status=tweet, media_ids=[media_id])
+                    else:
+                        twitter.update_status(status=tweet)
 
-                gruta.log("INFO", "Twitter-feed: POST %s" % gruta.url(story))
+                    gruta.log("INFO", "Twitter-feed: POST %s" % gruta.url(story))
 
-                # mark this story as seen
-                follower.set("ldate", story.get("date"))
-                gruta.save_follower(follower)
+                    # mark this story as seen
+                    follower.set("ldate", story.get("date"))
+                    gruta.save_follower(follower)
+                    r = 0
 
-            except:
-                gruta.log("ERROR", "Twitter-feed: FAIL %s" % gruta.url(story))
+                except:
+                    gruta.log("ERROR", "Twitter-feed: FAIL %s (len=%d)" % (
+                        gruta.url(story), len(tweet)))
+
+                    # shorten
+                    tweet = tweet[0:-10] + "\u2026"
+
+                    time.sleep(1)
+                    r -= 1
+
 
             # wait a reasonable time between stories to avoid hammering the server
             t = 5 - (time.time() - t)

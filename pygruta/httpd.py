@@ -78,8 +78,19 @@ class httpd_handler(BaseHTTPRequestHandler):
             # stored user name
             self.gruta.logged_user = auth[0]
 
-
         return self.gruta, q_path, q_vars
+
+
+    def _invalid_token(self, gruta):
+        ret = False
+
+        # does this connection require a token?
+        token = gruta.template("cfg_token")
+
+        if token != "" and token != self.headers.get("X-Gruta-Token"):
+            ret = True
+
+        return ret
 
 
     def do_HEAD(self):
@@ -105,7 +116,10 @@ class httpd_handler(BaseHTTPRequestHandler):
         if body is None:
             # HTTP status of 0 means 'didn't handled it'
 
-            status, body, ctype = gruta.get_handler(q_path, q_vars)
+            if self._invalid_token(gruta):
+                status, body, ctype = 401, "<h1>401 Auth Required</h1>", "text/html"
+            else:
+                status, body, ctype = gruta.get_handler(q_path, q_vars)
 
             # if successful, put into cache and create new etag
             if status == 200:
@@ -142,7 +156,10 @@ class httpd_handler(BaseHTTPRequestHandler):
 
         status, body, ctype = 0, None, None
 
-        if re.search("^/activitypub/inbox/.+", q_path):
+        if self._invalid_token(gruta):
+            status, body, ctype = 401, "<h1>401 Auth Required</h1>", "text/html"
+
+        elif re.search("^/activitypub/inbox/.+", q_path):
             status, body, ctype = activitypub.inbox_post_handler(gruta, q_path,
                 q_vars, p_data)
 

@@ -11,32 +11,6 @@ import glob, os, hashlib, time, fcntl
 
 from pygruta.base import Gruta
 
-def open_ex(fn, mode="r"):
-    """ Open exclusively a file. Returns None if cannot open """
-
-    f = None
-
-    while True:
-        try:
-            # open the file
-            f = open(fn, mode)
-        except:
-            # can't open? return None
-            break
-
-        try:
-            # non-blocking exclusive lock
-            fcntl.flock(f, 6)
-            # success; return file descriptor
-            break
-
-        except:
-            # couldn't lock; close, wait and retry
-            f.close()
-            time.sleep(0.25)
-
-    return f
-
 
 class FS(Gruta):
     def __init__(self, path):
@@ -188,9 +162,12 @@ class FS(Gruta):
     def _update_index(self, story, delete=False):
         index = "%s/topics/.INDEX" % self.path
 
-        i = open_ex(index, "r")
+        lk = open(index + ".lck", "w")
+        fcntl.flock(lk, 2)
 
-        if i is not None:
+        oi = open(index, "r")
+
+        if oi is not None:
             # new index
             ni = open(index + ".new", "w")
 
@@ -212,7 +189,7 @@ class FS(Gruta):
                     ]) + "\n"
 
             # iterate current index
-            for l in i:
+            for l in oi:
                 tr = l.replace("\n", "").split(":")
 
                 # if not already saved and this record
@@ -239,7 +216,7 @@ class FS(Gruta):
             os.rename(index + ".new", index)
 
             # finally close and release lock
-            i.close()
+            oi.close()
             ni.close()
 
         else:
@@ -264,9 +241,11 @@ class FS(Gruta):
             # reverse order
             l.sort(reverse=True)
 
-            with open(index, "w") as i:
+            with open(index, "w") as ni:
                 for r in l:
-                    i.write(r + "\n")
+                    ni.write(r + "\n")
+
+        lk.close()
 
 
     def _save_story(self, story):
@@ -446,8 +425,6 @@ class FS(Gruta):
             timeout += time.time()
 
         with open(index_file) as I:
-            fcntl.flock(I, 1)
-
             for l in I:
                 # timeout?
                 if timeout is not None and time.time() > timeout:

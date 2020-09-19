@@ -7,7 +7,7 @@
 
 import time, re
 
-__version__ = "1.42"
+__version__ = "1.43"
 
 def log_str(category, string):
     return "%-5s: %s %s" % (category, time.strftime("%Y-%m-%d %H:%M:%S"), string)
@@ -87,7 +87,7 @@ def special_uris(gruta, s, e=0, absolute=False):
                     ret += "<a href=\"" + gruta.url(story, absolute=absolute) + "\">"
                     ret += title + "</a>"
                 else:
-                    ret += "[bad story: " + x.group(0) + "]"
+                    ret += "<mark>bad story: " + x.group(0) + "</mark>"
 
 
             elif uri == "topic":
@@ -98,7 +98,7 @@ def special_uris(gruta, s, e=0, absolute=False):
                     ret += "<a href=\"" + gruta.url(topic, absolute=absolute) + "\">"
                     ret += topic.get("name") + "</a>"
                 else:
-                    ret += "[bad topic: " + x.group(0) + "]"
+                    ret += "<mark>bad topic: " + x.group(0) + "</mark>"
 
 
             elif uri == "link" or uri == "links":
@@ -147,7 +147,7 @@ def special_uris(gruta, s, e=0, absolute=False):
                     ret += "<h3>" + story.get("title") + "</h3>\n"
                     ret += special_uris(gruta, story.get("body"), 0, absolute)
                 else:
-                    ret += "[bad story: " + x.group(0) + "]"
+                    ret += "<mark>bad story: " + x.group(0) + "</mark>"
 
 
             elif uri == "h-card":
@@ -176,7 +176,7 @@ def special_uris(gruta, s, e=0, absolute=False):
 
                     ret += "</div>\n"
                 else:
-                    ret += "[bad user: " + uid + "]"
+                    ret += "<mark>bad user: " + uid + "</mark>"
 
 
             elif uri == "user":
@@ -190,7 +190,7 @@ def special_uris(gruta, s, e=0, absolute=False):
                         gruta.url(user), user.get("username"))
 
                 else:
-                    ret += "[bad user: %s]" % uid
+                    ret += "<mark>bad user: %s</mark>" % uid
 
 
             elif uri == "tag":
@@ -217,3 +217,22 @@ def special_uris(gruta, s, e=0, absolute=False):
             ret += special_uris(gruta, post, e, absolute)
 
     return ret
+
+
+def boldify(s, lo=0x1d5d4, no=0x1d7ec):
+    """ converts a string to Unicode sans-bold """
+    r = ""
+
+    for c in s:
+        c = ord(c)
+
+        if c >= ord("A") and c <= ord("Z"):
+            c += lo - ord("A")
+        elif c >= ord("a") and c <= ord("z"):
+            c += lo + 0x1a - ord("a")
+        elif c >= ord("0") and c <= ord("9"):
+            c += no - ord("0")
+
+        r += chr(c)
+
+    return r

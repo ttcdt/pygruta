@@ -4,4 +4,5 @@ all:
 install:
 	install pygruta.py $(BIN_PREFIX)/pygruta
 	./mkinstalldirs $(MOD_PREFIX)/pygruta
-	install pygruta/*.py $(MOD_PREFIX)/pygruta
+	chmod 755 $(MOD_PREFIX)/pygruta
+	install -m 755 pygruta/*.py $(MOD_PREFIX)/pygruta

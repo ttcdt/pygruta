@@ -26,7 +26,7 @@ def links_in_content(content):
             yield l
 
 
-def header(gruta, nav_headers="", title="", onload="", image=""):
+def header(gruta, nav_headers="", title="", onload="", image="", desc=""):
     """ standard page header """
 
     head, state, context = gruta.html_cache.get("h-head")
@@ -88,6 +88,11 @@ def header(gruta, nav_headers="", title="", onload="", image=""):
     s += "<title>%s: %s</title>\n" % (gruta.template("cfg_site_name"), title)
 
     s += gruta.template("additional_headers") + nav_headers
+
+    # if there is a description, add it to headers
+    if desc != "":
+        s += "<meta name=\"description\" content=\"%s\"/>\n" % desc
+        s += "<meta property=\"og:description\" content=\"%s\"/>\n" % desc
 
     # if there is an image URL, add it to headers
     if image != "":
@@ -201,28 +206,33 @@ def article(gruta, story, content):
 def story(gruta, story):
     """ story page """
 
-    # get the article block
-    art_block = article(gruta, story, story.get("body"))
-
-    # build the page
     onload = story.get("redir")
 
     if onload:
+        # is it a redirect page? create a minimal one
         onload = "window.location.replace('%s');" % onload
 
-    page = header(gruta, title=story.get("title"), onload=onload,
-        image=story.get("image"))
+        page = "<!doctype html><html><body onLoad=\"%s\"></body></html>" % onload
 
-    page += "<article id=\"%s/%s\" class=\"h-entry\" lang=\"%s\">\n" % (
-        story.get("topic_id"), story.get("id"), story.get("lang"))
+    else:
+        # get the article block
+        art_block = article(gruta, story, story.get("body"))
 
-    page += art_block
+        page = header(gruta, title=story.get("title"), onload=onload,
+            image=story.get("image"), desc=story.get("description"))
 
-    page += "</article>\n"
+        page += "<article id=\"%s/%s\" class=\"h-entry\" lang=\"%s\">\n" % (
+            story.get("topic_id"), story.get("id"), story.get("lang"))
 
-    page += footer(gruta)
+        page += art_block
 
-    return pygruta.special_uris(gruta, page)
+        page += "</article>\n"
+
+        page += footer(gruta)
+
+        page = pygruta.special_uris(gruta, page)
+
+    return page
 
 
 def user(gruta, u):
