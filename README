@@ -7,7 +7,7 @@ Gruta is a blogging tool with support for ActivityPub, Webmention, Tweeter, stat
 generation and more.
 
 This package is called pygruta and is a Python port/rework/reboot of the original
-Perl version [1].
+Perl version.
 
 Things that work by now:
 
@@ -36,5 +36,3 @@ Requirements outside Python standard library:
  * urllib3
  * OpenSSL (for ActivityPub)
  * twython (for Twitter)
-
-[1] https://triptico.com/software/gruta.html

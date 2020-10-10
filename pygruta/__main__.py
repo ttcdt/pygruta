@@ -38,12 +38,15 @@ def usage():
     print("activitypub-send-note {src} {uid} \\        Sends an ActivityPub note")
     print("    {actor_url} {msg}")
     print("activitypub-like {src} {uid} {post}        Likes a post")
+    print("activitypub-send-story {src} \\             Sends a story as an ActivityPub note")
+    print("    {actor_url} {topic_id} {id}")
     print("search {src} 'query string'                Searches stories by content")
     print("icalendar-import {src} {file.ics}          Imports an iCalendar into 'events' topic")
     print("icalendar-export {src}                     Exports the 'events' topic as an iCalendar")
     print("copy {src} {dest}                          Copies the 'src' db into 'dest'")
     print("atom {src}                                 Prints an ATOM feed to STDOUT")
     print("feeds {src}                                Sends all feeds")
+    print("short-url {src} {url}                      Returns a shortened URL")
 
     return 1
 
@@ -232,6 +235,29 @@ def main():
                     pygruta.activitypub.react(gruta, user, url)
     
     
+        elif cmd == "activitypub-send-story":
+            import pygruta.activitypub
+
+            if len(args) < 3:
+                ret = usage()
+            else:
+                dest     = args.pop()
+                topic_id = args.pop()
+                id       = args.pop()
+    
+                story_o = gruta.story(topic_id, id)
+
+                if story_o is None:
+                    pygruta.log("ERROR", "Bad story %s/%s" % (topic_id, id))
+                    ret = 10
+                else:
+                    user_o = gruta.user(story_o.get("userid"))
+
+                    note = pygruta.activitypub.note_from_story(gruta, story_o)
+
+                    pygruta.activitypub.send_note_to_actor(gruta, user_o, dest, note)
+
+
         elif cmd == "twitter-import":
             import pygruta.twitter
     
@@ -424,6 +450,14 @@ def main():
                 org = pygruta.open(args.pop())
                 org.copy(gruta)
                 org.close()
+
+        elif cmd == "short-url":
+
+            if len(args) < 1:
+                ret = usage()
+            else:
+                l_url = args.pop()
+                print(gruta.shorten_url(l_url))
     
         else:
             pygruta.log("ERROR", "invalid command: " + cmd)

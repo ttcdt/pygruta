@@ -6,8 +6,9 @@
 #
 
 import time, re
+import unicodedata
 
-__version__ = "1.44"
+__version__ = "1.45"
 
 def log_str(category, string):
     return "%-5s: %s %s" % (category, time.strftime("%Y-%m-%d %H:%M:%S"), string)
@@ -219,11 +220,28 @@ def special_uris(gruta, s, e=0, absolute=False):
     return ret
 
 
+def slugify(s):
+    """ creates a 'slug' (string with only ASCII characters) """
+
+    # split characters and accents
+    r = unicodedata.normalize("NFD", s.lower().strip())
+
+    # delete all chars of the "Mark", "Nonspacing" category
+    r = "".join(c for c in r if unicodedata.category(c) != "Mn")
+
+    # delete everything not ASCII
+    r = re.sub(r"\W+", "-", r).strip("-")
+
+    return r
+
+
 def boldify(s, lo=0x1d5d4, no=0x1d7ec):
     """ converts a string to Unicode sans-bold """
+
+    ns = unicodedata.normalize("NFD", s)
     r = ""
 
-    for c in s:
+    for c in ns:
         c = ord(c)
 
         if c >= ord("A") and c <= ord("Z"):

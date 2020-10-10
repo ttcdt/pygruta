@@ -26,7 +26,7 @@ def links_in_content(content):
             yield l
 
 
-def header(gruta, nav_headers="", title="", onload="", image="", desc=""):
+def header(gruta, nav_headers="", title="", image="", desc=""):
     """ standard page header """
 
     head, state, context = gruta.html_cache.get("h-head")
@@ -59,7 +59,7 @@ def header(gruta, nav_headers="", title="", onload="", image="", desc=""):
     header, state, context = gruta.html_cache.get("h-header")
 
     if not header:
-        header = "<body onLoad=\"$onload$\">\n"
+        header = "<body>\n"
         header += "<header>\n"
         header += "<h1 id=\"title\"><a href=\"%s\">%s</a></h1>\n" % (
             gruta.url(), gruta.template("cfg_site_name"))
@@ -102,7 +102,7 @@ def header(gruta, nav_headers="", title="", onload="", image="", desc=""):
     if image != "":
         s += "<meta property=\"og:image\" content=\"%s\"/>\n" % gruta.aurl(image)
 
-    s += header.replace("$onload$", onload)
+    s += header
 
     return s
 
@@ -222,7 +222,7 @@ def story(gruta, story):
         # get the article block
         art_block = article(gruta, story, story.get("body"))
 
-        page = header(gruta, title=story.get("title"), onload=onload,
+        page = header(gruta, title=story.get("title"),
             image=story.get("image"), desc=story.get("description"))
 
         page += "<article id=\"%s/%s\" class=\"h-entry\" lang=\"%s\">\n" % (
@@ -330,6 +330,11 @@ def paged_index(gruta, s_set, offset, num, title, prefix=None):
 
     page = header(gruta, nav_headers=h_nav, title=title)
 
+    t = gruta.template("paged_index_banner")
+
+    if t != "":
+        page += "<div class=\"paged_index_banner\">%s</div>\n" % t
+
     for s in s_set[0:num]:
         story   = gruta.story(s[0], s[1])
         content = story.get("abstract")
@@ -426,19 +431,22 @@ def calendar_month(gruta, year=None, month=None, topics=None, private=True):
 
         for s in s_sset:
             story = gruta.story(s[0], s[1])
-            c     = story.get("title")
 
-            # if the event continues next day, show it
-            if s[4] > "%04d%02d%02d239999" % (date.year, date.month, date.day):
-                c += "·" * 80
-            else:
-                # add hour if it's not 00:00
-                hm = gruta.date_format(s[2], "%H:%M")
+            # only show valid stories that are not redirections
+            if story is not None and story.get("redir") == "":
+                c = story.get("title")
 
-                if hm != "00:00":
-                    c= hm + " " + c
+                # if the event continues next day, show it
+                if s[4] > "%04d%02d%02d239999" % (date.year, date.month, date.day):
+                    c += "·" * 80
+                else:
+                    # add hour if it's not 00:00
+                    hm = gruta.date_format(s[2], "%H:%M")
 
-            page += c + "<br/>\n"
+                    if hm != "00:00":
+                        c= hm + " " + c
+
+                page += c + "<br/>\n"
 
         page += "</div>\n"
         page += "</div>\n"
@@ -530,20 +538,30 @@ def calendar_day(gruta, year, month, day, topics=None, private=True):
 
         for s in s_sset:
             story = gruta.story(s[0], s[1])
-            hm    = gruta.date_format(story.get("date"), "%H:%M")
 
-            page += "<h2>"
+            if story is not None and story.get("redir") == "":
+                hm = gruta.date_format(story.get("date"), "%H:%M")
 
-            if hm != "00:00":
-                page += hm + " "
+                page += "<h2>"
 
-            page += story.get("title")
+                if hm != "00:00":
+                    page += hm + " "
 
-            page += " <a href=\"%s\">&nbsp;&#x270E;&nbsp;</a>" % (
-                gruta.url("/admin/story/%s/%s" % (story.get("topic_id"), story.get("id"))))
+                page += story.get("title")
 
-            page += "</h2>\n"
-            page += pygruta.special_uris(gruta, story.get("abstract"))
+                page += " <a href=\"%s\">&nbsp;&#x270E;&nbsp;</a>" % (
+                    gruta.url("/admin/story/%s/%s" % (story.get("topic_id"), story.get("id"))))
+
+                page += "</h2>\n"
+                page += pygruta.special_uris(gruta, story.get("abstract"))
+
+                tags = story.get("tags")
+
+                if len(tags) > 0:
+                    page += "<ul>\n"
+                    for t in tags:
+                        page += "<li>%s</li>\n" % t
+                    page += "</ul>\n"
 
         page += "</div>\n</div>\n</body>\n</html>\n"
 
@@ -593,6 +611,20 @@ def admin(gruta):
         page += "<li><a href=\"%s\">%s</a>" % (gruta.url(topic), topic.get("name"))
         page += " <a href=\"%s\">&nbsp;&#x270E;&nbsp;</a>" % (
                     gruta.url("/admin/topic/%s" % t))
+
+        page += "</li>\n"
+
+    page += "</ul>\n"
+
+    page += "<h3>Users</h3>\n"
+
+    page += "<ul>\n"
+
+    for u in gruta.users():
+        user = gruta.user(u)
+        page += "<li><a href=\"%s\">%s</a>" % (gruta.url(user), user.get("id"))
+        page += " <a href=\"%s\">&nbsp;&#x270E;&nbsp;</a>" % (
+                    gruta.url("/admin/user/%s" % u))
 
         page += "</li>\n"
 
@@ -988,6 +1020,82 @@ def post_topic(gruta, p_data):
     return page
 
 
+# admin:user
+
+def edit_user(gruta, user):
+
+    page = header(gruta, title="Edit User")
+
+    page += "<h2>%s</h2>\n" % user.get("id")
+
+    page += "<form method=\"post\" action=\"%s\">\n" % gruta.url("/admin/user/")
+
+    page += "<input type=\"hidden\" name=\"id\" value=\"%s\"/>\n" % user.get("id")
+
+    page += "<p>Name:<br/>\n"
+    page += "<input type=\"text\" size=\"60\" name=\"username\" value=\"%s\"/>\n" % user.get("username")
+    page += "</p>\n"
+
+    page += "<p>Email:<br/>\n"
+    page += "<input type=\"text\" size=\"40\" name=\"email\" value=\"%s\"/>\n" % user.get("email")
+    page += "</p>\n"
+
+    page += "<p>Bio:<br/>\n"
+    page += "<input type=\"text\" size=\"80\" name=\"bio\" value=\"%s\"/>\n" % user.get("bio")
+    page += "</p>\n"
+
+    page += "<p>Avatar:<br/>\n"
+    page += "<input type=\"text\" size=\"80\" name=\"avatar\" value=\"%s\"/>\n" % user.get("avatar")
+    page += "</p>\n"
+
+    page += "<p>URL:<br/>\n"
+    page += "<input type=\"text\" size=\"80\" name=\"url\" value=\"%s\"/>\n" % user.get("url")
+    page += "</p>\n"
+
+    page += "<p>Public key:<br/>\n"
+    page += "<pre>\n"
+    page += user.get("pubkey")
+    page += "</pre>\n"
+
+    page += "<input type=\"hidden\" name=\"method\" value=\"post\">\n"
+
+    page += "<p><input type=\"submit\" class=\"button\" value=\"OK\"></p>\n"
+    page += "</form>\n"
+
+    page += footer(gruta)
+
+    return page
+
+
+def post_user(gruta, p_data):
+    """ posts a topic """
+
+    page = header(gruta, title="Post User")
+
+    id = p_data["id"][0]
+
+    user = gruta.user(id)
+
+    if user is not None:
+        page += "<h2>" + p_data["id"][0] + "</h2>\n"
+
+        for f in ("username", "email", "bio", "avatar", "url"):
+            try:
+                v = p_data[f][0]
+            except:
+                v = ""
+
+            user.set(f, v)
+
+        gruta.save_user(user)
+
+        page += "<h2>OK</h2>\n"
+
+    else:
+        page += "<h2>ERROR</h2><p>Bad user id.</p>"
+
+    return page
+
 # handler
 
 def get_handler(gruta, q_path, q_vars):
@@ -1156,6 +1264,24 @@ def get_handler(gruta, q_path, q_vars):
             status = 404
 
 
+    elif re.search("^/admin/user/.+", q_path):
+        # EDIT_USER
+
+        l = q_path[1:].split("/")
+
+        if len(l) == 3:
+            id = l[2]
+
+            user_o = gruta.user(id)
+
+            if user_o is not None:
+                status, body = 202, edit_user(gruta, user_o)
+            else:
+                status = 404
+        else:
+            status = 404
+
+
     elif re.search("^/admin/?$", q_path):
         # ADMIN
 
@@ -1241,5 +1367,8 @@ def post_handler(gruta, q_path, q_vars, p_data):
 
     if q_path == "/admin/topic/":
         status, body = 202, post_topic(gruta, p_data)
+
+    if q_path == "/admin/user/":
+        status, body = 202, post_user(gruta, p_data)
 
     return (status, body, ctype)

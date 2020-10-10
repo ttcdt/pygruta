@@ -275,11 +275,8 @@ class Gruta:
         """ creates an automatic id for a story """
 
         if story.get("title"):
-            # if there is a title, create a 'slug'
-            tr = str.maketrans("áéíóúàèìòùäëïöüñ", "aeiouaeiouaeioun")
-
-            id = story.get("title").lower().translate(tr).strip()
-            id = re.sub(r"\W+", "-", id).strip("-")
+            # create a 'slug' for the title
+            id = pygruta.slugify(story.get("title"))
 
         else:
             # pick one from date
