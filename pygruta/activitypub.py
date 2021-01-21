@@ -594,24 +594,26 @@ def inbox_post_handler(gruta, q_path, q_vars, p_data):
 
             status, data = send_to_actor(gruta, user, j["actor"], o)
 
-#            print("STATUS:", status, "DATA:", data)
-
             if status >= 200 and status <= 299:
 
                 # store as a follower: new posts
                 # will be sent to these people
 
-                follower = gruta.new_follower({
-                    "id":       j["actor"],
-                    "user_id":  uid,
-                    "date":     gruta.today(),
-                    "context":  p_data,
-                    "network":  "activitypub"
-                    })
+                if gruta.follower(uid, j["actor"]) is None:
+                    follower = gruta.new_follower({
+                        "id":       j["actor"],
+                        "user_id":  uid,
+                        "date":     gruta.today(),
+                        "context":  p_data,
+                        "network":  "activitypub"
+                        })
 
-                gruta.save_follower(follower)
-                gruta.notify("ActivityPub: %s NEW FOLLOWER '%s'" % (
-                    uid, j["actor"]))
+                    gruta.save_follower(follower)
+                    gruta.notify("ActivityPub: %s NEW FOLLOWER '%s'" % (
+                        uid, j["actor"]))
+                else:
+                    gruta.log("INFO", "ActivityPub: %s repeated follow request '%s'" % (
+                        uid, j["actor"]))
 
                 # created
                 status = 201

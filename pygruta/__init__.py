@@ -8,7 +8,7 @@
 import time, re
 import unicodedata
 
-__version__ = "1.45"
+__version__ = "1.46"
 
 def log_str(category, string):
     return "%-5s: %s %s" % (category, time.strftime("%Y-%m-%d %H:%M:%S"), string)

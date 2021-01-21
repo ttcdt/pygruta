@@ -140,7 +140,7 @@ def snapshot(gruta, outdir, url_prefix=""):
         out_u("/tag/%s.html" % tag)
 
         # ATOM feed for this tag
-        out_u("/tag/%s.xml" % tag)
+#        out_u("/tag/%s.xml" % tag)
 
         n_tags += 1
 
@@ -164,6 +164,12 @@ def snapshot(gruta, outdir, url_prefix=""):
 
     # robots.txt
     out_u("/robots.txt")
+
+    # twtxt.txt
+    out_u("/twtxt.txt")
+
+    # css
+    out_u("/main.css")
 
 
     # cleanup

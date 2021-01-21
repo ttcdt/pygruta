@@ -12,7 +12,7 @@ import pygruta
 def get_handler(gruta, q_path, q_vars):
     """ GET handler for .txt files """
 
-    status, body = 0, None
+    status, body, ctype = 0, None, "text/plain; charset=utf-8"
 
     if q_path == "/admin/status.txt":
         status = 202
@@ -27,5 +27,34 @@ def get_handler(gruta, q_path, q_vars):
         status = 200
         body   = gruta.template("robots_txt")
 
+    elif q_path == "/twtxt.txt":
+        status = 200
+        body   = twtxt(gruta, gruta.feed())
 
-    return status, body, "text/plain; charset=utf-8"
+    elif q_path == "/main.css":
+        status = 200
+        body   = gruta.template("css_compact")
+        ctype  = "text/css"
+
+    return status, body, ctype
+
+
+def twtxt(gruta, story_set):
+    """ twtxt.txt feed """
+
+    page = "#\n# nick: %s\n# site: %s - %s\n# url : %s\n#\n" % (
+        gruta.template("cfg_main_user"),
+        gruta.template("cfg_site_name"),
+        gruta.template("cfg_slogan"),
+        gruta.aurl()
+    )
+
+    for s in reversed(list(story_set)):
+        story = gruta.story(s[0], s[1])
+        date  = gruta.date_format(story.get("date"), "%FT%TZ")
+
+        page += "%s\t%s (%s)\n" % (
+            date, story.get("title"), gruta.aurl(story)
+        )
+
+    return page

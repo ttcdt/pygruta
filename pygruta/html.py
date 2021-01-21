@@ -33,7 +33,14 @@ def header(gruta, nav_headers="", title="", image="", desc=""):
 
     if not head:
         head = "<!doctype html>\n<html>\n<head>\n"
-        head += "<style type=\"text/css\">%s</style>\n" % gruta.template("css_compact")
+
+        # css
+        if gruta.template("cfg_standalone_css") == "1":
+            head += "<link rel=\"stylesheet\" type=\"text/css\" href=\"%s\" />\n" % (
+                gruta.url("main.css"))
+        else:
+            head += "<style type=\"text/css\">%s</style>\n" % gruta.template("css_compact")
+
         head += "<link rel=\"alternate\" type=\"application/atom+xml\" title=\"ATOM\" href=\"%s\" />\n" % gruta.url("atom.xml")
         head += "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"RSS\" href=\"%s\" />\n" % gruta.url("rss.xml")
 
@@ -114,9 +121,13 @@ def footer(gruta):
 
     if not s:
         s = "</section>\n"
-        s += "<footer id=\"footer\">\n"
-        s += gruta.template("cfg_copyright") + "\n"
-        s +="</footer>\n</body>\n</html>\n"
+
+        t = gruta.template("cfg_copyright")
+
+        if t != "":
+            s += "<footer id=\"footer\">\n%s\n</footer>\n" % t
+
+        s += "</body>\n</html>\n"
 
         gruta.html_cache.put("h-footer", s)
 
@@ -222,8 +233,17 @@ def story(gruta, story):
         # get the article block
         art_block = article(gruta, story, story.get("body"))
 
+        # get the image
+        image = story.get("image")
+
+        if image == "":
+            # no image? try the creator avatar
+            user = gruta.user(story.get("userid") or gruta.template("cfg_main_user"))
+            if user is not None:
+                image = user.get("avatar")
+
         page = header(gruta, title=story.get("title"),
-            image=story.get("image"), desc=story.get("description"))
+            image=image, desc=story.get("description"))
 
         page += "<article id=\"%s/%s\" class=\"h-entry\" lang=\"%s\">\n" % (
             story.get("topic_id"), story.get("id"), story.get("lang"))

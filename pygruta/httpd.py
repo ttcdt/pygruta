@@ -12,6 +12,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import urllib.parse
 import time
 import re
+import os
 import hashlib, base64
 
 import pygruta
@@ -77,6 +78,13 @@ class httpd_handler(BaseHTTPRequestHandler):
 
             # stored user name
             self.gruta.logged_user = auth[0]
+
+        # CGI-style REMOTE_USER auth?
+        if self.gruta.logged_user == "":
+            auth = os.environ.get("REMOTE_USER")
+
+            if auth is not None and self.gruta.user(auth) is not None:
+                self.gruta.logged_user = auth
 
         return self.gruta, q_path, q_vars
 

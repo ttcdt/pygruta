@@ -499,8 +499,10 @@ class Gruta:
     def url(self, object=None, prefix=None, absolute=False):
         """ Returns a gruta URL depending on object """
 
+        base_url = "https://" + self.host_name
+
         if absolute:
-            s = "https://" + self.host_name
+            s = base_url
         else:
             s = ""
 
@@ -529,6 +531,10 @@ class Gruta:
 
         else:
             s += "/"
+
+        # fix base_url repetitions
+        if s.startswith(base_url + "/" + base_url):
+            s = s[len(base_url) + 1:]
 
         return s
 

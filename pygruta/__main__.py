@@ -92,7 +92,10 @@ def lines_to_story(story, lines):
 
     for key, value in data.items():
         if key == "tags":
-            value = value.split(",")
+            if value == "":
+                value = []
+            else:
+                value = value.split(",")
 
         story.set(key, value)
 
