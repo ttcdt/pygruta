@@ -31,7 +31,7 @@ def get_handler(gruta, q_path, q_vars):
         status = 200
         body   = twtxt(gruta, gruta.feed())
 
-    elif q_path == "/main.css":
+    elif q_path == "/style.css":
         status = 200
         body   = gruta.template("css_compact")
         ctype  = "text/css"

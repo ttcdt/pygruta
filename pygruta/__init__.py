@@ -5,10 +5,10 @@
 #   This software is released into the public domain.
 #
 
-import time, re
+import time, re, os
 import unicodedata
 
-__version__ = "1.46"
+__version__ = "1.47"
 
 def log_str(category, string):
     return "%-5s: %s %s" % (category, time.strftime("%Y-%m-%d %H:%M:%S"), string)
@@ -25,8 +25,8 @@ def open(source):
         import pygruta.MEM
         return pygruta.MEM.MEM(source)
 
-    elif source[0] == "/":
-        # it's a path; return FS
+    elif os.stat(source).st_mode & 0x4000:
+        # it's a directory; assume FS
         import pygruta.FS
         return pygruta.FS.FS(source)
 

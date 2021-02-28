@@ -37,7 +37,7 @@ def header(gruta, nav_headers="", title="", image="", desc=""):
         # css
         if gruta.template("cfg_standalone_css") == "1":
             head += "<link rel=\"stylesheet\" type=\"text/css\" href=\"%s\" />\n" % (
-                gruta.url("main.css"))
+                gruta.url("style.css"))
         else:
             head += "<style type=\"text/css\">%s</style>\n" % gruta.template("css_compact")
 

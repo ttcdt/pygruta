@@ -107,9 +107,25 @@ class Gruta:
         self.html_cache = pygruta.cache.Cache()
         self.page_cache = pygruta.cache.Cache()
 
+        # timed flush information
+        self.timed_flush_max  = 24 * 60 * 60
+        self.timed_flush_last = time.time()
+
     def flush(self):
         """ flushes possible pending data in memory """
         self._flush()
+        self.log("INFO", "FLUSH")
+
+    def timed_flush(self):
+        """ flushes if the counter timeouts """
+        t = time.time()
+        r = self.timed_flush_max - (t - self.timed_flush_last)
+
+        if r < 0:
+            self.flush()
+            self.timed_flush_last = t
+
+        return r
 
     def close(self):
         self._close()

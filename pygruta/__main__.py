@@ -29,6 +29,9 @@ def usage():
     print("story {src} {topic_id} {id}                Dumps a story to STDOUT")
     print("delete-story {src} {topic_id} {id}         Deletes a story")
     print("snapshot {src} {out folder} [url_prefix]   Snapshots a Gruta site")
+    print("snap-url-list {src} {out folder}           Lists the URLs to be snapshotted")
+    print("snap-url {src} {out folder} {url_prefix} \\")
+    print("    {url} [url...]                         Snapshots URLs one by one")
     print("httpd {src} [port]                         Runs the httpd")
     print("webmention-feed {src}                      Sends Webmentions to links in the feed")
     print("twitter-feed {src}                         Sends the feed to Twitter")
@@ -150,7 +153,38 @@ def main():
                 from pygruta.snapshot import snapshot
     
                 snapshot(gruta, outdir, url_prefix)
+
+        elif cmd == "snap-url-list":
+            if len(args) < 1:
+                ret = usage()
+            else:
+                outdir = args.pop()
     
+                if len(args):
+                    url_prefix = args.pop()
+                else:
+                    url_prefix = ""
+    
+                from pygruta.snapshot import url_list
+    
+                for f in url_list(gruta, outdir):
+                    print(f.replace(" ", "%20"))
+
+        elif cmd == "snap-url":
+            if len(args) < 3:
+                ret = usage()
+            else:
+                outdir     = args.pop()
+                url_prefix = args.pop()
+    
+                import pygruta.snapshot
+
+                gruta.url_prefix     = url_prefix
+                pygruta.snapshot.set_outdir(gruta, outdir)
+
+                for url in args:
+                    pygruta.snapshot.snap_url(gruta, outdir, url)
+
         elif cmd == "httpd":
             import pygruta.httpd
     

@@ -50,6 +50,8 @@ class httpd_handler(BaseHTTPRequestHandler):
 
             self.wfile.write(body)
 
+        self.gruta.timed_flush()
+
 
     def _init(self):
         # parse query string and vars

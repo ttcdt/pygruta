@@ -5,68 +5,15 @@
 #   This software is released into the public domain.
 #
 
-#   snaphost to a static site
+#   snapshot to a static site
 
 import pygruta
 import pygruta.html as html
 import pygruta.xml as xml
 import glob, os, re
 
-def snapshot(gruta, outdir, url_prefix=""):
-    """ Creates a full snapshot of a Gruta site """
-
-    def out(file, content):
-        """ snapshots a file with possible directories """
-
-        try:
-            gruta.snapshot_files.remove(file)
-        except:
-            pass
-
-        # create the path if it does not exist
-        path = file.split("/")
-        p = ""
-        for sp in path[1:-1]:
-            p += "/" + sp
-
-            try:
-                os.mkdir(p)
-                gruta.log("INFO", "Snapshot: CREATE %s" % p)
-            except:
-                pass
-
-        # convert content to binary
-        if isinstance(content, str):
-            content = content.encode("utf-8")
-
-        # check if file didn't changed
-        w = True
-        try:
-            f = open(file, "rb")
-            o_content = f.read()
-            f.close()
-
-            if o_content == content:
-                w = False
-        except:
-            pass
-
-        if w:
-            gruta.log("INFO", "Snapshot: WRITE %s" % file)
-            with open(file, "wb") as f:
-                f.write(content)
-
-
-    def out_u(url):
-        """ snapshots by url """
-
-        status, body, ctype = gruta.get_handler(url)
-
-        if status == 200:
-            out(gruta.snapshot_outdir + url, body)
-
-        return status
-
+def set_outdir(gruta, outdir):
+    """ sets the snapshot output directory """
 
     # ensure there is a trailing /
     if outdir[-1] != "/":
@@ -76,103 +23,113 @@ def snapshot(gruta, outdir, url_prefix=""):
     gruta.snapshot_files = glob.glob(outdir + "**", recursive=True)
     gruta.snapshot_files.remove(outdir)
 
-    # set the url prefix
-    gruta.url_prefix = url_prefix
-
     # store the outdir (without the trailing slash)
     gruta.snapshot_outdir = outdir[0:-1]
 
+
+def url_list(gruta, outdir):
+    """ Generates the urls to be snapshotted """
+
+    set_outdir(gruta, outdir)
+
+    def d(file):
+        try:
+            gruta.snapshot_files.remove(gruta.snapshot_outdir + file)
+        except:
+            pass
+
+        return file
+
     # IMAGES
     for i in gruta.images():
-        out_u("/img/%s" % i)
+        yield d("/img/%s" % i)
 
     # STORIES
     for s in gruta.story_set():
-        out_u("/%s/%s.html" % (s[0], s[1]))
+        yield d("/%s/%s.html" % (s[0], s[1]))
 
     # INDEXES
     if gruta.story("info", "index"):
-        out_u("/index.html")
+        yield d("/index.html")
 
     else:
-        num    = int(gruta.template("cfg_index_num"))
-        offset = 0
+        num      = int(gruta.template("cfg_index_num"))
+        offset   = 0
+        i_topics = gruta.template("cfg_index_topics").split(":")
+        max      = len(list(gruta.story_set(topics=i_topics)))
 
-        while True:
+        while offset < max:
             fn = "/~%d.html" % offset if offset else "/index.html"
 
-            if out_u(fn) != 200:
-                break
+            yield d(fn)
 
             offset += num
-
 
     # TOPICS
     num = int(gruta.template("cfg_topic_num"))
 
     for t in gruta.topics():
         # create an ATOM for the first page of the index
-        out_u("/%s/atom.xml" % t)
+        yield d("/%s/atom.xml" % t)
 
         # if there is an index page, only generate that
         if gruta.story(t, "index") is not None:
-            out_u("/%s/index.html" % t)
+            yield d("/%s/index.html" % t)
         else:
             offset = 0
+            max    = len(list(gruta.story_set(topics=[t])))
 
-            while True:
+            while offset < max:
                 if offset == 0:
                     fn = "/%s/index.html" % t
                 else:
                     fn = "/%s/~%d.html" % (t, offset)
 
-                if out_u(fn) != 200:
-                    break
+                yield d(fn)
 
                 offset += num
-
 
     # TAGS
     n_tags = 0
 
     for tag in gruta.tags():
         # html page
-        out_u("/tag/%s.html" % tag)
+        yield d("/tag/%s.html" % tag)
 
         # ATOM feed for this tag
-#        out_u("/tag/%s.xml" % tag)
+#        yield d("/tag/%s.xml" % tag)
 
         n_tags += 1
 
     # only create a tag index if there are tags
     if n_tags > 0:
-        out_u("/tag/index.html")
+        yield d("/tag/index.html")
 
 
     # RSS 2.0
-    out_u("/rss.xml")
+    yield d("/rss.xml")
 
     # ATOM
-    out_u("/atom.xml")
+    yield d("/atom.xml")
 
     # SITEMAP
-    out_u("/sitemap.xml")
+    yield d("/sitemap.xml")
 
     # USERS
     for id in gruta.users():
-        out_u("/user/%s.html" % id)
+        yield d("/user/%s.html" % id)
 
     # robots.txt
-    out_u("/robots.txt")
+    yield d("/robots.txt")
 
     # twtxt.txt
-    out_u("/twtxt.txt")
+    yield d("/twtxt.txt")
 
     # css
-    out_u("/main.css")
+    yield d("/style.css")
 
 
-    # cleanup
+    # delete all files in the snapshot folder that were not generated
     l = list(gruta.snapshot_files)
     l.sort(reverse=True);
 
@@ -186,3 +143,72 @@ def snapshot(gruta, outdir, url_prefix=""):
                 gruta.log("INFO", "Snapshot: RMDIR %s" % f)
             except:
                 pass
+
+
+def store(gruta, file, content):
+    """ writes a file if it's different """
+
+    # convert content to binary
+    if isinstance(content, str):
+        content = content.encode("utf-8")
+
+    # read already stored content (can fail if file does not exist yet)
+    try:
+        f = open(file, "rb")
+        o_content = f.read()
+        f.close()
+    except:
+        o_content = ""
+
+    # different?
+    if content != o_content:
+        # write as is
+        try:
+            f = open(file, "wb")
+            f.write(content)
+            f.close()
+            gruta.log("INFO", "Snapshot: WRITE %s" % file)
+
+        except:
+            # may have failed because path does not exist,
+            # so try to create it
+            path = file.split("/")
+            p = ""
+            for sp in path[1:-1]:
+                p += "/" + sp
+
+                try:
+                    os.mkdir(p)
+                    gruta.log("INFO", "Snapshot: CREATE %s" % p)
+                except:
+                    pass
+
+            # retry write
+            try:
+                f = open(file, "wb")
+                f.write(content)
+                f.close()
+                gruta.log("INFO", "Snapshot: WRITE %s" % file)
+            except:
+                gruta.log("ERROR", "Snapshot: cannot WRITE %s" % file)
+
+
+def snap_url(gruta, outdir, url):
+    """ Snapshots one url """
+    url = url.replace("%20", " ")
+
+    status, body, ctype = gruta.get_handler(url)
+
+    if status == 200:
+        store(gruta, gruta.snapshot_outdir + url, body)
+
+
+def snapshot(gruta, outdir, url_prefix=""):
+    """ Creates a full snapshot of a Gruta site """
+
+    # set the url prefix
+    gruta.url_prefix = url_prefix
+
+    # iterates the urls
+    for url in url_list(gruta, outdir):
+        snap_url(gruta, outdir, url)
