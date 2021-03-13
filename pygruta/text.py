@@ -7,6 +7,7 @@
 
 #   text generator
 
+import re
 import pygruta
 
 def get_handler(gruta, q_path, q_vars):
@@ -58,3 +59,22 @@ def twtxt(gruta, story_set):
         )
 
     return page
+
+
+def to_html(content):
+    """ converts to HTML """
+
+    # pick title from first line
+    title = content.split("\n")[0]
+    title = title.replace("\n", "")
+
+    # fix problematic chars
+    content = re.sub("&", "&amp;", content)
+    content = re.sub("<", "&lt;", content)
+    content = re.sub(">", "&gt;", content)
+
+    # wrap body as preformatted
+    body = "<pre>\n" + content + "</pre>\n"
+    abstract = body
+
+    return title, abstract, body

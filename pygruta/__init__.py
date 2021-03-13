@@ -8,7 +8,7 @@
 import time, re, os
 import unicodedata
 
-__version__ = "1.47"
+__version__ = "1.48"
 
 def log_str(category, string):
     return "%-5s: %s %s" % (category, time.strftime("%Y-%m-%d %H:%M:%S"), string)
@@ -50,7 +50,9 @@ def special_uris(gruta, s, e=0, absolute=False):
         r"(h-card)://([\w0-9_-]+)",
         r"(user)://([\w0-9_-]+)",
         r'(tag)://([^\s<]+)?\s*\(([^\)]+)\)',
-        r'(tag)://([^\s<]+)?'
+        r'(tag)://([^\s<]+)?',
+        r'(mail):([^\s@]+@[^\s]+)\s*\(([^\)]+)\)',
+        r'(mail):([^\s@]+@[^\s]+)'
     ]
 
     if e >= len(regexes):
@@ -112,6 +114,18 @@ def special_uris(gruta, s, e=0, absolute=False):
                     title = url
 
                 ret += "<a href=\"" + url + "\">" + title + "</a>"
+
+
+            elif uri == "mail":
+
+                addr = x.group(2)
+
+                try:
+                    title = x.group(3)
+                except:
+                    title = addr
+
+                ret += "<a href=\"mailto:" + addr + "\">" + title + "</a>"
 
 
             elif uri == "img":

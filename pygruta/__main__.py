@@ -50,6 +50,7 @@ def usage():
     print("atom {src}                                 Prints an ATOM feed to STDOUT")
     print("feeds {src}                                Sends all feeds")
     print("short-url {src} {url}                      Returns a shortened URL")
+    print("gemini-snapshot {src} {outdir}             Creates a Gemini snapshot")
 
     return 1
 
@@ -495,6 +496,16 @@ def main():
             else:
                 l_url = args.pop()
                 print(gruta.shorten_url(l_url))
+
+        elif cmd == "gemini-snapshot":
+
+            if len(args) < 1:
+                ret = usage()
+            else:
+                outdir = args.pop()
+
+                import pygruta.gemini
+                pygruta.gemini.snapshot(gruta, outdir)
     
         else:
             pygruta.log("ERROR", "invalid command: " + cmd)

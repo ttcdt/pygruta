@@ -1,0 +1,13 @@
+Pygruta release notes
+=====================
+
+1.48
+----
+
+* New features:
+
+Stories can now be written in Gemini (Gemtext) format and rendered to HTML.
+
+A new command line option has been added, `gemini-snapshot', to generate a snapshot of Gemini (.gmi) files. Only stories in Gemini format will be generated, as well as an index.gmi file liking all of them in reverse date order.
+
+The special URI mail: (analog to mailto:) is supported.

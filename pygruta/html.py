@@ -725,7 +725,7 @@ def edit_story(gruta, story, q_vars):
     format = story.get("format") or gruta.template("cfg_default_format")
     page += "<p>Format:<br/>\n"
 
-    for f in ("raw_html", "grutatxt", "text"):
+    for f in ("raw_html", "grutatxt", "text", "gemini"):
         page += "<input type=\"radio\" name=\"format\" value=\"%s\"" % f
 
         if f == format:

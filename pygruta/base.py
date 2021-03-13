@@ -15,6 +15,7 @@ import pygruta.http
 import pygruta.html as html
 import pygruta.xml as xml
 import pygruta.text as text
+import pygruta.gemini as gemini
 import pygruta.activitypub as activitypub
 import pygruta.calendar as calendar
 
@@ -572,19 +573,18 @@ class Gruta:
         if format == "text":
             # content is verbatim text
 
+            n_title, abstract, body = text.to_html(content)
+
             if title == "":
-                # pick title from first line
-                title = content.split("\n")[0]
-                title = title.replace("\n", "")
+                title = n_title
 
-            # fix problematic chars
-            content = re.sub("&", "&amp;", content)
-            content = re.sub("<", "&lt;", content)
-            content = re.sub(">", "&gt;", content)
+        if format == "gemini":
+            # content is Gemini
 
-            # wrap body as preformatted
-            body = "<pre>\n" + content + "</pre>\n"
-            abstract = body
+            n_title, abstract, body = gemini.to_html(content)
+
+            if title == "":
+                title = n_title
 
         else:
             # grutatxt, html and raw_html are similar
