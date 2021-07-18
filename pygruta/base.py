@@ -102,6 +102,12 @@ class Gruta:
         # empty url_prefix
         self.url_prefix = ""
 
+        # default protocol
+        self.url_proto = "https://"
+
+        # default extension
+        self.url_ext = "html"
+
         # debug flag (if 0, log messages of DEBUG category don't show)
         self.debug = 0
 
@@ -423,7 +429,7 @@ class Gruta:
         t = Follower({"id": id, "user_id": user_id})
         return self._load_follower(t)
 
-    def new_follower(self, o):
+    def new_follower(self, o={}):
         return Follower(o)
 
     def save_follower(self, follower):
@@ -516,7 +522,7 @@ class Gruta:
     def url(self, object=None, prefix=None, absolute=False):
         """ Returns a gruta URL depending on object """
 
-        base_url = "https://" + self.host_name
+        base_url = self.url_proto + self.host_name
 
         if absolute:
             s = base_url
@@ -526,13 +532,13 @@ class Gruta:
         s += self.url_prefix
 
         if isinstance(object, Story):
-            s += "/%s/%s.html" % (object.get("topic_id"), object.get("id"))
+            s += "/%s/%s.%s" % (object.get("topic_id"), object.get("id"), self.url_ext)
 
         elif isinstance(object, Topic):
-            s += "/%s/index.html" % object.get("id")
+            s += "/%s/index.%s" % (object.get("id"), self.url_ext)
 
         elif isinstance(object, User):
-            s += "/user/%s.html" % object.get("id")
+            s += "/user/%s.%s" % (object.get("id"), self.url_ext)
 
         elif isinstance(object, str):
             if prefix is not None:
@@ -701,15 +707,16 @@ class Gruta:
 
         for s in self.story_set(private=private):
             for t in s[3]:
-                l = c.get(t)
-                if not l:
-                    l = c[t] = []
+                if t != "":
+                    l = c.get(t)
+                    if not l:
+                        l = c[t] = []
 
-                l.append([s[0], s[1]])
+                    l.append([s[0], s[1]])
 
-                # if test is set, only check that there is at least 1 tag
-                if test:
-                    break
+                    # if test is set, only check that there is at least 1 tag
+                    if test:
+                        break
 
         return c
 

@@ -8,7 +8,7 @@
 import time, re, os
 import unicodedata
 
-__version__ = "1.48"
+__version__ = "1.49"
 
 def log_str(category, string):
     return "%-5s: %s %s" % (category, time.strftime("%Y-%m-%d %H:%M:%S"), string)
@@ -24,6 +24,11 @@ def open(source):
         # it's a JSON-backed DB: return MEM
         import pygruta.MEM
         return pygruta.MEM.MEM(source)
+
+    elif re.search("\.sqlite$", source):
+        # SQLite
+        import pygruta.SQLite
+        return pygruta.SQLite.SQLite(source)
 
     elif os.stat(source).st_mode & 0x4000:
         # it's a directory; assume FS

@@ -11,7 +11,7 @@ Perl version.
 
 Things that work by now:
 
- * Almost complete support for Gruta database maintenance in FS format
+ * Almost complete support for Gruta database maintenance in FS and SQLite formats
    for topics, stories, users, followers and indexes.
  * Snapshotting to a static site.
  * ActivityPub support: reception of messages, direct messages,
@@ -25,7 +25,6 @@ Things that work by now:
 
 Things that do not work:
 
- * The SQL storage of the Gruta database (it won't probably be ported).
  * Comments to stories (probably will never be ported).
 
 This software is released into the public domain.

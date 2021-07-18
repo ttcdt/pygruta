@@ -28,7 +28,7 @@ def sitemap(gruta):
     return page
 
 
-def atom(gruta, story_set, subtitle=None, rel=None):
+def atom(gruta, story_set, subtitle=None, rel=None, with_content=True):
     """ ATOM feed """
 
     if subtitle is None:
@@ -78,15 +78,17 @@ def atom(gruta, story_set, subtitle=None, rel=None):
         for t in story.get("tags"):
             page += "<category term=\"%s\"/>\n" % t
 
-        page += "<content type=\"html\" xml:lang=\"%s\">" % story.get("lang")
+        if with_content:
+            page += "<content type=\"html\" xml:lang=\"%s\">" % story.get("lang")
 
-        # escape html
-        abstract_esc = re.sub("&", "&amp;", abstract)
-        abstract_esc = re.sub("<", "&lt;", abstract_esc)
-        abstract_esc = re.sub(">", "&gt;", abstract_esc)
-        page += abstract_esc
+            # escape html
+            abstract_esc = re.sub("&", "&amp;", abstract)
+            abstract_esc = re.sub("<", "&lt;", abstract_esc)
+            abstract_esc = re.sub(">", "&gt;", abstract_esc)
+            page += abstract_esc
 
-        page += "</content>\n"
+            page += "</content>\n"
+
         page += "</entry>\n"
 
     page += "</feed>\n"

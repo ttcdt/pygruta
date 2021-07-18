@@ -8,6 +8,7 @@
 #   Gemini support
 
 import re, glob, os
+import pygruta.xml
 
 def to_html(content):
     """ converts a text in Gemini (Gemtext) format to HTML """
@@ -18,13 +19,15 @@ def to_html(content):
 
     # iterate by lines
     for l in content.split("\n"):
+        l = l.replace("<", "&lt;").replace(">", "&gt;")
+
         if l.startswith("###"):
             x = re.search(r"^###\s*(.*)$", l)
-            l = "<h3>" + x.group(1) + "</h3>"
+            l = "<h4>" + x.group(1) + "</h4>"
 
         elif l.startswith("##"):
             x = re.search(r"^##\s*(.*)$", l)
-            l = "<h2>" + x.group(1) + "</h2>"
+            l = "<h3>" + x.group(1) + "</h3>"
 
         elif l.startswith("#"):
             x = re.search(r"^#\s*(.*)$", l)
@@ -74,8 +77,17 @@ def to_html(content):
     return title, body, body
 
 
-def snapshot(gruta, outdir):
+def snapshot(gruta, outdir, url_prefix=""):
     """ A very simple snapshotting of Gemini files """
+
+    # set the url prefix
+    gruta.url_prefix = url_prefix
+
+    # set the protocol
+    gruta.url_proto = "gemini://"
+
+    # set the extension
+    gruta.url_ext = "gmi"
 
     # ensure there is a trailing /
     if outdir[-1] != "/":
@@ -101,6 +113,10 @@ def snapshot(gruta, outdir):
     index.write("# %s\n\n" % gruta.template("cfg_site_name"))
     index.write("## %s\n\n" % gruta.template("cfg_slogan"))
 
+    # story set for the atom feed
+    atom     = []
+    atom_num = int(gruta.template("cfg_rss_num"))
+
     # iterate all stories
     for si in gruta.story_set():
         t = si[0]
@@ -113,7 +129,12 @@ def snapshot(gruta, outdir):
             # get author
             user = gruta.user(story.get("userid"))
 
-            gmi = open(d("%s.gmi" % s), "w")
+            try:
+                os.mkdir("%s/%s" % (gruta.snapshot_outdir, t))
+            except:
+                pass
+
+            gmi = open(d("%s/%s.gmi" % (t, s)), "w")
             gruta.log("INFO", "Gemini snapshot: CREATE %s.gmi" % s)
 
             gmi.write("# %s\n\n" % story.get("title"))
@@ -123,10 +144,20 @@ def snapshot(gruta, outdir):
                 )
             )
             gmi.write(story.get("content") + "\n")
-            gmi.write("=> index.gmi Back\n")
+            gmi.write("=> %s/index.gmi Back\n" % gruta.url_prefix)
 
             # write story into index
-            index.write("=> %s.gmi %s\n" % (s, story.get("title")))
+            index.write("=> %s/%s.gmi %s\n" % (t, s, story.get("title")))
+
+            # store into the feed
+            if len(atom) < atom_num:
+                atom.append(si)
+
+    # save the atom feed
+    feed = pygruta.xml.atom(gruta, atom, with_content=False)
+    f = open(d("atom.xml"), "w")
+    f.write(feed)
+    f.close()
 
     for f in list(gruta.snapshot_files):
         try:

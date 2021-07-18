@@ -1,6 +1,15 @@
 Pygruta release notes
 =====================
 
+1.49
+----
+
+* New features:
+
+A new SQLite driver.
+
+[Gemini] Snapshot also generates atom.xml.
+
 1.48
 ----
 
